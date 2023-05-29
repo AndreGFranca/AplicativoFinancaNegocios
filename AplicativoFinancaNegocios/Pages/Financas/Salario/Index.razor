@@ -1,0 +1,95 @@
+﻿@page "/financas/salarios"
+@using AplicativoFinancaNegocios.Applications.FinanceiroViewApplication;
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Cards
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Tabelas
+@using AplicativoFinancaNegocios.Services;
+@using DTO.DTOs.Salario;
+@using Microsoft.Extensions.Logging;
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject SalarioApplication application
+@inject ILogger<CreateSalarioDTO> Logger
+
+<h1>Salários</h1>
+
+<EditForm Model="@salarioForm" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="salarioDesejado">Salario desejado:</label>
+                <input type="number" class="form-control form-text " id="salarioDesejado" name="salarioDesejado" @bind-value="@salarioForm.CustoTotal" />
+                <ValidationMessage For="@(() => salarioForm.CustoTotal)" />
+            </div>
+            <div class="form-group">
+                <label for="tempoDeProducaoPorMinuto">Tempo de Produção por minuto:</label>
+                <input type="number" class="form-control form-text " id="tempoDeProducaoPorMinuto" name="tempoDeProducaoPorMinuto" @bind-value="@salarioForm.TempoDeProducaoPorMinuto" />
+                <ValidationMessage For="@(() => salarioForm.TempoDeProducaoPorMinuto)" />
+            </div>
+            <div class="form-group">
+                <label for="diasTrabalhadoNoMes">Dias Trabalhados no Mês:</label>
+                <input type="number" class="form-control form-text " id="diasTrabalhadoNoMes" name="diasTrabalhadoNoMes" @bind-value="@salarioForm.DiasNoMes" />
+                <ValidationMessage For="@(() => salarioForm.DiasNoMes)" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="diasPorSemana">Dias por Semana:</label>
+                <input type="number" class="form-control form-text " id="diasPorSemana" name="diasPorSemana" @bind-value="@salarioForm.DiasPorSemana" />
+                <ValidationMessage For="@(() => salarioForm.DiasPorSemana)" />
+            </div>
+            <div class="form-group">
+                <label for="horasPorDia">Horas Por dia:</label>
+                <input type="number" class="form-control form-text " id="horasPorDia" name="horasPorDia" @bind-value="@salarioForm.HorasPorDia" />
+                <ValidationMessage For="@(() => salarioForm.HorasPorDia)" />
+            </div>
+
+        </div>
+        <div class="form-group">
+            <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+        </div>
+    </div>
+
+</EditForm>
+
+@if (salarios.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <Card T="ReadSalarioDTO" Item="salarios[0]">
+        <SubTitulo Context="salario">
+            <span class="">Salário</span>
+            <span class="">@salario.CustoTotal.ToString("C2")</span>
+        </SubTitulo>
+        <Conteudo Context="salario">
+            <strong>Dias Trab. Mês:  </strong><span class="">@salario.DiasNoMes</span><br />
+            <strong>Dias p/ Semana:  </strong><span>@salario.DiasPorSemana     </span><br />
+            <strong>Hora p/ dia:     </strong><span>@salario.HorasPorDia  </span><br />
+            <strong>Tempo Produção:  </strong><span>@salario.TempoDeProducaoPorMinuto </span><br />
+            <strong>Custo Mão Obra:  </strong><span>@salario.ValorPorHora.ToString("C2")  </span><br />
+            <strong>Valor p/ dia:    </strong><span>@salario.ValorPorDia.ToString("C2")    </span><br />
+            <strong>Valor p/ hora:   </strong><span>@salario.ValorPorHora.ToString("C2")   </span>    <br />
+            <strong>Valor p/ minuto: </strong><span>@salario.ValorPorMinutos.ToString("C2") </span>
+        </Conteudo>
+    </Card>
+
+}
+
+@code {
+    private IReadOnlyList<ReadSalarioDTO> salarios;
+
+    CreateSalarioDTO salarioForm = new CreateSalarioDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        salarios = await application.ObterRegistrosDeLeitura<FilterSalarioDTO,ReadSalarioDTO>();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await application.AdicionarNovoRegistro(salarioForm);
+        //salarios = salarioService.ObterRegistrosDeLeitura();
+    }
+}

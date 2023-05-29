@@ -1,0 +1,25 @@
+﻿@*<div class="container">
+    <div class="row">*@
+@typeparam T
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@SubTitulo(Item)</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        @Conteudo(Item)
+    </MudCardContent>
+</MudCard>
+@*    </div>
+</div>*@
+
+@code {
+    [Parameter]
+    public RenderFragment<T> SubTitulo { get; set; }
+
+    [Parameter]
+    public RenderFragment<T> Conteudo { get; set; }
+    [Parameter]
+    public T Item { get; set; }
+}

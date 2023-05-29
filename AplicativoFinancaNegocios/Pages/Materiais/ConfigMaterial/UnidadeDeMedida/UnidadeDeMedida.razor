@@ -1,0 +1,69 @@
+﻿@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Containers
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Tabelas
+@using DTO.DTOs.Materiais.MaterialConfig;
+@using DTO.DTOs.Materiais.UnidadeDeMedidaDTOs;
+
+
+<ContainerPrincipal NomePagina="Unidade De Medidas" IsLoading="@IsLoading">
+    <Conteudo>
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="nomeUnidadeDeMedida">Unidade de Medida:</label>
+                        <input type="text" class="form-control form-text " id="nomeUnidadeDeMedida" name="nomeUnidadeDeMedida" @bind-value="@Model.Nome" />
+                        <ValidationMessage For="@(() => Model.Nome)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="nomeUnidadeDeMedida">Abreviação:</label>
+                        <input type="text" class="form-control form-text " id="nomeUnidadeDeMedida" name="nomeUnidadeDeMedida" @bind-value="@Model.Abreviacao" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+                </div>
+            </div>
+        </EditForm>
+
+        @if (UnidadesDeMedida.Count == 0)
+        {
+            <p><em>Sem Dados Cadastrados</em></p>
+        }
+        else
+        {
+            <Tabela T="ReadUnidadeDeMedidaDTO" Context="UnidadeDeMedida" IsLoading="IsLoading" Dados="@UnidadesDeMedida">
+                <Cabecalho>
+                    <MudTh>Nome</MudTh>
+                    <MudTh>Abreviação</MudTh>
+                </Cabecalho>
+                <Linha>
+                    <MudTd DataLabel="Nome">@UnidadeDeMedida.Nome</MudTd>
+                    <MudTd DataLabel="Abreviação">@UnidadeDeMedida.Abreviacao</MudTd>
+                </Linha>
+            </Tabela>
+        }
+    </Conteudo>
+</ContainerPrincipal>
+
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ReadUnidadeDeMedidaDTO> UnidadesDeMedida { get; set; }
+    private CreateUnidadeDeMedidaDTO Model = new CreateUnidadeDeMedidaDTO();
+    [Parameter]
+    public CreateMaterialConfigDTO MaterialConfig { get; set; }
+    [Parameter]
+    public Func<CreateMaterialConfigDTO, Task> CadastrarUnidadeDeMedida { get; set; }
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+
+    private async Task HandleValidSubmit()
+    {
+        MaterialConfig.UnidadeDeMedida = Model;
+        await CadastrarUnidadeDeMedida?.Invoke(MaterialConfig);
+    }
+}

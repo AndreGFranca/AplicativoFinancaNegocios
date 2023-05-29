@@ -1,0 +1,61 @@
+﻿@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Containers
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Tabelas
+@using DTO.DTOs.Materiais.MarcaDTOs;
+@using DTO.DTOs.Materiais.MaterialConfig;
+
+
+<ContainerPrincipal NomePagina="Marcas" IsLoading="@IsLoading">
+    <Conteudo>
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="nomeMarca">Nome da Marca:</label>
+                        <input type="text" class="form-control form-text " id="nomeMarca" name="nomeMarca" @bind-value="@Model.Nome" />
+                        <ValidationMessage For="@(() => Model.Nome)" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+                </div>
+            </div>
+        </EditForm>
+
+        @if (Marcas.Count == 0)
+        {
+            <p><em>Sem Dados Cadastrados</em></p>
+        }
+        else
+        {
+            <Tabela T="ReadMarcaDTO" Context="Marca" IsLoading="IsLoading" Dados="@Marcas">
+                <Cabecalho>
+                    <MudTh>Nome</MudTh>
+                </Cabecalho>
+                <Linha>
+                    <MudTd DataLabel="Nome">@Marca.Nome</MudTd>
+                </Linha>
+            </Tabela>
+        }
+
+    </Conteudo>
+</ContainerPrincipal>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ReadMarcaDTO> Marcas { get; set; }
+    private CreateMarcaDTO Model = new CreateMarcaDTO();
+    [Parameter]
+    public CreateMaterialConfigDTO MaterialConfig { get; set; }
+    [Parameter]
+    public Func<CreateMaterialConfigDTO, Task> CadastrarMarca { get; set; }
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+
+    private async Task HandleValidSubmit()
+    {
+        MaterialConfig.Marca = Model;
+        await CadastrarMarca?.Invoke(MaterialConfig);
+    }
+}

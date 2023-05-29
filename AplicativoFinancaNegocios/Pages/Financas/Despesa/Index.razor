@@ -1,0 +1,99 @@
+﻿@page "/financas/despesas"
+@using AplicativoFinancaNegocios.Applications.FinanceiroViewApplication;
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Cards
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Containers
+@using DTO.DTOs.Despesa
+
+@inject DespesaApplication despesaApplication
+<h1>Despesas</h1>
+
+<ContainerPrincipal IsLoading="@IsLoading">
+    <Conteudo>
+
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="salarioDesejado">Despesa Total:</label>
+                        <input type="number" class="form-control form-text " id="salarioDesejado" name="salarioDesejado" @bind-value="@Model.CustoTotal" />
+                        <ValidationMessage For="@(() => Model.CustoTotal)" />
+            </div>
+            <div class="form-group">
+                <label for="tempoDeProducaoPorMinuto">Tempo de Produção por minuto:</label>
+                        <input type="number" class="form-control form-text " id="tempoDeProducaoPorMinuto" name="tempoDeProducaoPorMinuto" @bind-value="@Model.TempoDeProducaoPorMinuto" />
+                        <ValidationMessage For="@(() => Model.TempoDeProducaoPorMinuto)" />
+            </div>
+            <div class="form-group">
+                <label for="diasTrabalhadoNoMes">Dias produzido no Mês:</label>
+                        <input type="number" class="form-control form-text " id="diasTrabalhadoNoMes" name="diasTrabalhadoNoMes" @bind-value="@Model.DiasNoMes" />
+                        <ValidationMessage For="@(() => Model.DiasNoMes)" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="diasPorSemana">Dias por Semana:</label>
+                        <input type="number" class="form-control form-text " id="diasPorSemana" name="diasPorSemana" @bind-value="@Model.DiasPorSemana" />
+                        <ValidationMessage For="@(() => Model.DiasPorSemana)" />
+            </div>
+            <div class="form-group">
+                <label for="horasPorDia">Horas Por dia:</label>
+                        <input type="number" class="form-control form-text " id="horasPorDia" name="horasPorDia" @bind-value="@Model.HorasPorDia" />
+                        <ValidationMessage For="@(() => Model.HorasPorDia)" />
+            </div>
+
+        </div>
+        <div class="form-group">
+            <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+        </div>
+    </div>
+
+</EditForm>
+
+@if (Despesas.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <Card T="ReadDespesaDTO" Item="Despesas[0]">
+        <SubTitulo Context="Despesa">
+            <span class="">Despesa</span>
+                    <span class="">@Despesa.CustoTotal.ToString("C2")</span>
+        </SubTitulo>
+        <Conteudo Context="Despesa">
+                    <strong>Dias Prod. Mês:  </strong><span class="">@Despesa.DiasNoMes</span><br />
+                    <strong>Dias p/ Semana:  </strong><span>@Despesa.DiasPorSemana     </span><br />
+                    <strong>Hora p/ dia:     </strong><span>@Despesa.HorasPorDia  </span><br />
+                    <strong>Tempo Produção:  </strong><span>@Despesa.TempoDeProducaoPorMinuto </span><br />
+                    <strong>Custo da Despesa:  </strong><span>@Despesa.CustoMaoObra.ToString("C2")  </span><br />
+                    <strong>Valor p/ dia:    </strong><span>@Despesa.ValorPorDia.ToString("C2")    </span><br />
+                    <strong>Valor p/ hora:   </strong><span>@Despesa.ValorPorHora.ToString("C2")   </span>    <br />
+                    <strong>Valor p/ minuto: </strong><span>@Despesa.ValorPorMinutos.ToString("C2") </span><br />
+        </Conteudo>
+    </Card>
+
+}
+    </Conteudo>
+</ContainerPrincipal>
+
+
+@code {
+    private IReadOnlyList<ReadDespesaDTO> Despesas;
+    public bool IsLoading { get; set; } = true;
+    CreateDespesaDTO Model { get; set; } = new CreateDespesaDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Despesas = await despesaApplication.ObterRegistrosDeLeitura<FilterDespesaDTO,ReadDespesaDTO>();
+        IsLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        IsLoading = true;
+        await despesaApplication.AdicionarNovoRegistro(Model);
+        Despesas = await despesaApplication.ObterRegistrosDeLeitura<FilterDespesaDTO, ReadDespesaDTO>();
+        IsLoading = false;
+    }
+}

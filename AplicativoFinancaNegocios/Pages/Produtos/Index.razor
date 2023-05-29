@@ -1,0 +1,126 @@
+﻿@page "/produtos"
+@using AplicativoFinancaNegocios.Applications.ProdutoViewApplication;
+@using DTO.DTOs.Imagem;
+@using DTO.DTOs.Produtos.ProdutoDTOs;
+
+@inject ProdutoApplication application
+
+<h1>Produtos</h1>
+<EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="row">
+        <MudTextField Label="Nome do Produto:" HelperText="Max. 255 caracteres"
+                      @bind-Value="Model.Nome" For="@(() => Model.Nome)" />
+        <MudTextField Label="Descrição do Produto" Class="mt-3"
+                      @bind-Value="Model.Descricao" For="@(() => Model.Descricao)" />
+        <MudTextField Label="Porcentagem de Lucro" Class="mt-3" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Percent"
+                      @bind-Value="Model.LucroPorcentagem" For="@(() => Model.LucroPorcentagem)" />
+        <MudTextField Label="Valor Anunciado:" Class="mt-3" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                      @bind-Value="Model.ValorAnunciado" For="@(() => Model.ValorAnunciado)" />
+        <div class="form-group">
+            <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+        </div>
+        <MudFileUpload Context="upload" T="IBrowserFile" FilesChanged="UploadFile">
+            <ButtonTemplate>
+                <MudFab HtmlTag="label"
+                        Color="Color.Secondary"
+                        Icon="@Icons.Material.Filled.Image"
+                        Label="Adicionar imagem"
+                        for="@upload" />
+            </ButtonTemplate>
+        </MudFileUpload>
+
+        <MudList>
+            @if (Model.Imagens?.Count() > 0)
+            {
+                @foreach (var imagem in Model.Imagens)
+                {
+                    <MudListItem Avatar="@Icons.Material.Filled.Image">
+                        @imagem.NomeDoArquivo - <MudImage Width="150" Height="100" Src="@imagem.Imagem64" Alt="Imagem do Produto" Elevation="25" Class="rounded-lg" />
+                    </MudListItem>
+                }
+            }
+        </MudList>
+        <MudList>
+            @if (Model.ComposicoesDoProduto?.Count() > 0)
+            {
+                @foreach (var composicao in Model.ComposicoesDoProduto)
+                {
+                    <MudListItem Avatar="@Icons.Material.Filled.Image">
+                        @composicao.Produto.Nome
+                    </MudListItem>
+                }
+            }
+        </MudList>
+
+
+    </div>
+
+</EditForm>
+@if (Produtos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nome</th>
+                <th>Descricao (F)</th>
+                <th>Preco</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var produto in Produtos)
+            {
+                <tr>
+                    <td>@produto.Id</td>
+                    <td>@produto.Nome</td>
+                    <td>@produto.Descricao</td>
+                    <td></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<ReadProdutoDTO> Produtos;
+    private CreateProdutoDTO Model { get; set; } = new CreateProdutoDTO();
+    private CreateImagemDTO ImagemSelecionada { get; set; } = new CreateImagemDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Produtos = await application.ObterRegistrosDeLeitura<FilterProdutoDTO, ReadProdutoDTO>();
+    }
+    private async Task HandleValidSubmit()
+    {
+        await application.AdicionarNovoRegistro(Model);
+        Produtos = await application.ObterRegistrosDeLeitura<FilterProdutoDTO,ReadProdutoDTO>();
+    }
+    private async Task UploadFile(IBrowserFile file)
+    {
+
+        using (var stream = file.OpenReadStream())
+        {
+            CreateImagemDTO NovaImagem = new CreateImagemDTO(ImagemSelecionada);
+            NovaImagem.BytesDaImagem = await ConvertStreamToByteArray(stream);
+            NovaImagem.NomeDoArquivo = file.Name;
+            NovaImagem.Imagem64 = $"data:image/png;base64,{Convert.ToBase64String(NovaImagem.BytesDaImagem)}";
+            Model.Imagens.Add(NovaImagem);
+        }
+        
+        //TODO upload the files to the server
+    }
+
+    private async Task<byte[]> ConvertStreamToByteArray(Stream stream)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            await stream.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+    }
+}

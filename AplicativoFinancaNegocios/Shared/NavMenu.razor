@@ -1,0 +1,99 @@
+﻿@inject NavigationManager NavigationManager
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">AplicativoFinancaNegocios</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="teste">
+                <MudIcon Icon="@Icons.Material.Filled.DeveloperMode" Size="Size.Large" /> Testes
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="produtos">
+                <MudIcon Icon="@Icons.Material.Filled.FormatListBulleted" Size="Size.Large" /> Produtos
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="financas/salarios">
+                <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" /> Salários
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/financas/despesas">
+                <MudIcon Icon="@Icons.Material.Filled.MoneyOff" Size="Size.Large" /> Despesas
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" @onclick="ExpandirEstoque">
+                <MudIcon Icon="@Icons.Material.Filled.Workspaces" Size="Size.Large" /> Estoque
+            </NavLink>
+            @if (expandirEstoque)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="histEstoque">
+                        <MudIcon Icon="@Icons.Material.Filled.Restore" Size="Size.Large" /> Hist. Estoque
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="material">
+                        <MudIcon Icon="@Icons.Material.Filled.Handyman" Size="Size.Large" /> Materiais
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="configMateriais">
+                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Large" /> Config. Materiais
+                    </NavLink>
+                </div>
+            }
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    //private void ToggleNavMenu(EventUi e)
+    //{
+
+    //    // Verifica se o link clicado é o link "Estoque"
+    //    var targetElement = e.
+    //    var href = targetElement.GetAttribute("href");
+    //    if (href == "teste") // Substitua "teste" pelo href correto do link "Estoque"
+    //    {
+    //        return; // Não altera o estado do collapseNavMenu
+    //    }
+
+    //    collapseNavMenu = !collapseNavMenu;
+
+    //}
+    private void ExpandirEstoque()
+    {
+        expandirEstoque = !expandirEstoque;
+    }
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += HandleLocationChanged;
+    }
+
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+            collapseNavMenu = true; // Oculta o menu ao mudar de página        
+            StateHasChanged();
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+    private bool expandirEstoque = false;
+}

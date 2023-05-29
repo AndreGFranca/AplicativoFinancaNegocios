@@ -1,0 +1,61 @@
+﻿@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Containers
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Tabelas
+@using DTO.DTOs.Materiais.Cor;
+@using DTO.DTOs.Materiais.MaterialConfig;
+
+<ContainerPrincipal NomePagina="Cores" IsLoading="@IsLoading">
+    <Conteudo>
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="nomeCor">Nome da Cor:</label>
+                        <input type="text" class="form-control form-text " id="nomeCor" name="nomeCor" @bind-value="@Model.Nome" />
+                        <ValidationMessage For="@(() => Model.Nome)" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+                </div>
+            </div>
+        </EditForm>
+
+        @if (Cores.Count == 0)
+        {
+            <p><em>Sem Dados Cadastrados</em></p>
+        }
+        else
+        {
+            <Tabela T="ReadCorDTO" Context="Cor" IsLoading="IsLoading" Dados="@Cores">
+                <Cabecalho>
+                    <MudTh>Nome</MudTh>
+                </Cabecalho>
+                <Linha>
+                    <MudTd DataLabel="Nome">@Cor.Nome</MudTd>
+                </Linha>
+            </Tabela>
+        }
+    </Conteudo>
+</ContainerPrincipal>
+
+
+@code {
+    [Parameter]
+    public IReadOnlyList<ReadCorDTO> Cores { get; set; }
+    private CreateCorDTO Model = new CreateCorDTO();
+    [Parameter]
+    public CreateMaterialConfigDTO MaterialConfig { get; set; }
+    [Parameter]
+    public Func<CreateMaterialConfigDTO, Task> CadastrarCor { get; set; }
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+
+
+    private async Task HandleValidSubmit()
+    {
+        MaterialConfig.Cor = Model;
+        await CadastrarCor?.Invoke(MaterialConfig);
+    }
+}

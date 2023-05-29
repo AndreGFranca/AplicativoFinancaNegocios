@@ -1,0 +1,142 @@
+﻿@page "/material"
+@using AplicativoFinancaNegocios.Applications.MaterialViewApplication;
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Containers
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Tabelas
+@using DTO.DTOs.Materiais.MaterialDTOs;
+@using DTO.DTOs.Materiais.UnidadeDeMedidaDTOs;
+
+@inject IDialogService DialogService
+@inject MaterialApplication application
+@inject UnidadeDeMedidaApplication unidadeDeMedidaApplication
+
+<ContainerPrincipal NomePagina="Materiais" IsLoading="@IsLoading" Expandir="@Expandir">
+    <Conteudo>
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <MudTextField Label="Nome do Material" HelperText="Max. 255 caracteres"
+                                      @bind-Value="Model.Nome" For="@(() => Model.Nome)" />
+                    </div>
+                    <div class="form-group">
+                        <MudNumericField Format="N2" T="decimal" Label="Preço Padrão"
+                                      @bind-Value="Model.PrecoPadrao" For="@(() => Model.PrecoPadrao)" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" AdornmentColor="Color.Warning" />
+                    </div>
+                    <div class="form-group">
+                        <MudNumericField Format="N4" Label="Peso na Embalagem"
+                                      @bind-Value="Model.PesoEmbalagem" For="@(() => Model.PesoEmbalagem)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <MudTextField Label="Descrição do Material"
+                                      @bind-Value="Model.Descricao" For="@(() => Model.Descricao)" HelperText="Max. 1000 caracteres" />
+                    </div>
+                    <div class="form-group">
+                        <MudNumericField Format="N4" Label="Peso/Quantidade"
+                                      @bind-Value="Model.PesoQTDOriginal" For="@(() => Model.PesoQTDOriginal)" />
+                    </div>
+                    <div class="form-group">
+                        <MudSelect AnchorOrigin="Origin.BottomCenter" Required="true" ValueChanged="@((value) => {Model.UnidadeDeMedidaId = value.Value;})" T="int?" Label="Selecione uma Unidade de medida" Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary">
+                            @foreach (ReadUnidadeDeMedidaDTO unidadesDeMedidaAtivas in UnidadesDeMedidasAtivas)
+                            {
+                                <MudSelectItem Value="@unidadesDeMedidaAtivas?.Id">@unidadesDeMedidaAtivas.Nome - @unidadesDeMedidaAtivas.Abreviacao</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <ValidationMessage For="@(() => Model.UnidadeDeMedidaId)" />
+                </div>
+                <div class="form-group">
+                    <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+                </div>
+            </div>
+
+        </EditForm>
+    </Conteudo>
+</ContainerPrincipal>
+
+
+@if (Materiais.Count == 0)
+{
+    <p><em>Sem Dados Cadastrados</em></p>
+}
+else
+{
+    <Tabela T="ReadMaterialDTO" Context="Material" IsLoading="IsLoading" Dados="@Materiais">
+        <Cabecalho>
+            <MudTh>Nome</MudTh>
+            <MudTh>Descrição</MudTh>
+            <MudTh>Peso/Qtd</MudTh>
+            <MudTh>Preço Padrão</MudTh>
+            <MudTh>Dt. Registro</MudTh>
+            <MudTh>Ações</MudTh>
+        </Cabecalho>
+        <Linha>
+            <MudTd DataLabel="Nome">@Material.Nome</MudTd>
+            <MudTd DataLabel="Descrição">@Material.Descricao</MudTd>
+            <MudTd DataLabel="Peso/Qtd">@Material.PesoQTDOriginal @Material.UnidadeDeMedida?.Abreviacao</MudTd>
+            <MudTd DataLabel="Preço Padrão">@Material.PrecoPadrao.ToString("C2")</MudTd>
+            <MudTd DataLabel="Dt. Registro">@Material.DataRegistro</MudTd>
+            <MudTd DataLabel="Ações">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" @onclick="async() => await OpenDialog(Material)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Large" />
+            </MudTd>
+        </Linha>
+    </Tabela>
+
+}
+
+@code {
+    private IReadOnlyList<ReadMaterialDTO> Materiais;
+    public bool IsLoading = true;
+    CreateMaterialDTO Model = new CreateMaterialDTO();
+    IReadOnlyList<ReadUnidadeDeMedidaDTO> UnidadesDeMedidasAtivas;
+    public bool Expandir { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AtualizaItens();
+    }
+
+    public async Task AtualizaItens(){ 
+        IsLoading = true;
+        StateHasChanged();
+        UnidadesDeMedidasAtivas = await unidadeDeMedidaApplication.ObterRegistrosDeLeitura<FilterUnidadeDeMedidaDTO, ReadUnidadeDeMedidaDTO>();
+        Materiais = await application.ObterRegistrosDeLeitura<FilterMaterialDTO, ReadMaterialDTO>();
+        IsLoading = false;        
+        StateHasChanged();
+    }
+
+    private async Task OpenDialog(ReadMaterialDTO readModel)
+    {
+        try
+        {
+            StateHasChanged();
+            var updateModel = application.ConvesaoDeDTO<ReadMaterialDTO, UpdateMaterialDTO>(readModel);
+
+            DialogOptions closeOnEscapeKey = new DialogOptions() { CloseOnEscapeKey = true };
+            DialogParameters parametros = new DialogParameters();
+
+            parametros.Add("UnidadesDeMedidasAtivas", UnidadesDeMedidasAtivas);
+            parametros.Add("Application", application);
+            parametros.Add("Model", updateModel);
+            parametros.Add("AtualizarItens", async () => await AtualizaItens());
+            parametros.Add("Id", readModel.Id);
+
+            await DialogService.ShowAsync<EditMaterial>("Edição", parametros, closeOnEscapeKey);
+        }
+        catch (Exception ex)
+        {
+            
+        }
+
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await application.AdicionarNovoRegistro(Model);
+        await AtualizaItens();
+    }
+}

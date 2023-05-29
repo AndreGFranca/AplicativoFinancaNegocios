@@ -1,0 +1,161 @@
+﻿@page "/histEstoque"
+@using AplicativoFinancaNegocios.Applications.EstoqueViewApplication;
+@using AplicativoFinancaNegocios.Applications.MaterialViewApplication;
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Containers
+@using AplicativoFinancaNegocios.Pages.Utils.Componentes.Tabelas
+@using DTO.DTOs.Estoque;
+@using DTO.DTOs.Materiais.Cor;
+@using DTO.DTOs.Materiais.MarcaDTOs;
+@using DTO.DTOs.Materiais.MaterialConfig;
+@using DTO.DTOs.Materiais.MaterialDTOs;
+@using DTO.Enums;
+
+@inject HistEstoqueApplication application
+@inject MaterialApplication applicationMaterial
+@inject ConfigMaterialApplication applicationConfigMaterial
+
+<ContainerPrincipal IsLoading="@IsLoading" NomePagina="Historico de Estoque"
+    Expandir="true"
+>
+    <Conteudo>
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <MudSelect Required="true" ValueChanged="@((value) => {Model.MaterialId = value.Value; AtualizaPrecoPadrao(value.Value);})" T="int?" Label="Selecione um Material" AnchorOrigin="Origin.CenterLeft" TransformOrigin="Origin.CenterRight" Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary">
+                            @foreach (ReadMaterialDTO material in MateriaisAtivos)
+                            {
+                                <MudSelectItem Value="@material?.Id">@material.Nome</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <ValidationMessage For="@(() => Model.MaterialId)" />
+                    </div>
+                    <div class="form-group">
+                        <MudSelect Required="true" ValueChanged="@((value) => {Model.CorId = value.Value;})" T="int?" Label="Selecione uma Cor" AnchorOrigin="Origin.CenterLeft" TransformOrigin="Origin.CenterRight" Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary">
+                            @foreach (ReadCorDTO cor in ConfigMateriaisAtivos.Cores)
+                            {
+                                <MudSelectItem Value="@cor?.Id">@cor.Nome</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <ValidationMessage For="@(() => Model.CorId)" />
+                    </div>
+                    <div class="form-group">
+                        <MudSelect Required="true" ValueChanged="@((value) => {Model.MarcaId = value.Value;})" T="int?" Label="Selecione uma Marca" AnchorOrigin="Origin.CenterLeft" TransformOrigin="Origin.CenterRight" Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary">
+                            @foreach (ReadMarcaDTO marca in ConfigMateriaisAtivos.Marcas)
+                            {
+                                <MudSelectItem Value="@marca?.Id">@marca.Nome</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <ValidationMessage For="@(() => Model.MarcaId)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="precoPadrao">Quantidade</label>
+                        <MudTextField @bind-Value="@Model.Quantidade" OnBlur="@(() => AtualizaPrecoTotal())" Variant="Variant.Outlined" Adornment="Adornment.Start" />
+                        <ValidationMessage For="@(() => Model.Quantidade)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <MudSelect Required="true" Value="@Model.Operacao" T="TipoOperacao" Label="Selecione uma Operação" AnchorOrigin="Origin.CenterLeft" TransformOrigin="Origin.CenterRight" Variant="Variant.Outlined" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary">
+                            @foreach (TipoOperacao item in Enum.GetValues(typeof(TipoOperacao)))
+                            {
+                                <MudSelectItem Value="@item">@item</MudSelectItem>
+                            }
+                        </MudSelect>
+                        @*<ValidationMessage For="@(() => Model.Operacao)" />*@
+                    </div>
+
+                    <div class="form-group">
+                        <label for="precoPadrao">Preço Unitário @Model.PrecoPago @ValorUntario</label>
+                        <MudTextField @bind-Value="@ValorUntario" OnBlur="@(() => AtualizaPrecoTotal())" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" AdornmentColor="Color.Warning" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="precoPadrao">Preço Total</label>
+                        <MudTextField @bind-Value="@Model.PrecoPago" Disabled Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" AdornmentColor="Color.Warning" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+                </div>
+            </div>
+        </EditForm>
+    </Conteudo>
+ </ContainerPrincipal>
+@if (HistEstoques.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <Tabela T="ReadHistoricoEstoqueDTO" Context="HistEstoque" IsLoading="IsLoading" Dados="@HistEstoques">
+        <Cabecalho>
+            <MudTh>Id</MudTh>
+            <MudTh>Operação</MudTh>
+            <MudTh>Material</MudTh>
+            <MudTh>Marca</MudTh>
+            <MudTh>Cor</MudTh>
+            <MudTh>Quantidade</MudTh>
+            <MudTh>Preço Pago</MudTh>
+            <MudTh>Dt. Registro</MudTh>
+
+        </Cabecalho>
+        <Linha>
+            <MudTd Label="Id">@HistEstoque.Id</MudTd>
+            <MudTd Label="Operação">@HistEstoque.Operacao</MudTd>
+            <MudTd Label="Material">@HistEstoque.Material?.Nome</MudTd>
+            <MudTd Label="Marca">@HistEstoque.Marca?.Nome</MudTd>
+            <MudTd Label="Cor">@HistEstoque.Cor?.Nome</MudTd>
+            <MudTd Label="Quantidade">@HistEstoque.Quantidade</MudTd>
+            <MudTd Label="Preço Pago">@HistEstoque.PrecoPago.ToString("C2")</MudTd>
+            <MudTd Label="Dt. Registro">@HistEstoque.DataRegistro</MudTd>
+        </Linha>
+    </Tabela>
+}
+
+@code {
+    private IReadOnlyList<ReadHistoricoEstoqueDTO> HistEstoques;
+    public bool IsLoading = true;
+    CreateHistoricoEstoqueDTO Model { get; set; } = new CreateHistoricoEstoqueDTO();
+    ReadMaterialConfigDTO ConfigMateriaisAtivos;
+    IReadOnlyList<ReadMaterialDTO> MateriaisAtivos;
+    public decimal ValorUntario { get; set; }
+
+    public void AtualizaPrecoTotal()
+    {
+        Model.PrecoPago = ValorUntario * Model.Quantidade;
+    }
+    public void AtualizaPrecoPadrao(int id)
+    {
+        ValorUntario = MateriaisAtivos.FirstOrDefault(a => a.Id == id).PrecoPadrao;
+        AtualizaPrecoTotal();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        MateriaisAtivos = await applicationMaterial.ObterRegistrosDeLeitura<FilterMaterialDTO, ReadMaterialDTO>();
+        ConfigMateriaisAtivos = await applicationConfigMaterial.ObterConfigsMaterial();
+        HistEstoques = await application.ObterRegistrosDeLeitura<FilterHistoricoEstoqueDTO, ReadHistoricoEstoqueDTO>();
+        IsLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            IsLoading = true;
+            await application.AdicionarNovoRegistro(Model);
+            HistEstoques = await application.ObterRegistrosDeLeitura<FilterHistoricoEstoqueDTO, ReadHistoricoEstoqueDTO>();
+            StateHasChanged();
+            IsLoading = false;
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+
+        //salarios = salarioService.ObterRegistrosDeLeitura();
+    }
+}

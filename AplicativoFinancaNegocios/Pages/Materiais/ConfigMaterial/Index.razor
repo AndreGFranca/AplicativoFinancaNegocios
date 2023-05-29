@@ -1,0 +1,39 @@
+﻿@page "/configMateriais"
+@using AplicativoFinancaNegocios.Applications.MaterialViewApplication;
+@using AplicativoFinancaNegocios.Pages.Materiais.ConfigMaterial.Cor
+@using AplicativoFinancaNegocios.Pages.Materiais.ConfigMaterial.Marca
+@using AplicativoFinancaNegocios.Pages.Materiais.ConfigMaterial.UnidadeDeMedida
+@using DTO.DTOs.Materiais.MaterialConfig;
+
+@inject ConfigMaterialApplication application
+<h1>Configuração de Materiais</h1>
+
+<Cor Cores="@configMateriais.Cores" IsLoading="@IsLoading" CadastrarCor="@HandleValidSubmit" MaterialConfig="@cadastroDTO" />
+<Marca Marcas="@configMateriais.Marcas" IsLoading="@IsLoading" CadastrarMarca="@HandleValidSubmit" MaterialConfig="@cadastroDTO" />
+<UnidadeDeMedida UnidadesDeMedida="@configMateriais.UnidadesDeMedida" IsLoading="@IsLoading" CadastrarUnidadeDeMedida="@HandleValidSubmit" MaterialConfig="@cadastroDTO" />
+
+@code {
+    private ReadMaterialConfigDTO configMateriais { get; set; }
+
+    CreateMaterialConfigDTO cadastroDTO = new CreateMaterialConfigDTO();
+    public bool IsLoading = true;
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        configMateriais = await application.ObterConfigsMaterial();
+        IsLoading = false;
+    }
+
+    private async Task HandleValidSubmit(CreateMaterialConfigDTO cadastroDTO)
+    {
+        IsLoading = true;
+        await application.AdicionarNovoRegistro(cadastroDTO);
+        cadastroDTO.Cor = null;
+        cadastroDTO.Marca = null;
+        cadastroDTO.UnidadeDeMedida = null;
+        configMateriais = await application.ObterConfigsMaterial();
+        StateHasChanged();
+        IsLoading = false;
+        //salarios = salarioService.ObterRegistrosDeLeitura();
+    }
+}

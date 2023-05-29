@@ -1,0 +1,88 @@
+﻿@page "/teste"
+
+@using AplicativoFinancaNegocios.Applications.ImagemViewApplication;
+@using DTO.DTOs.Imagem;
+
+@inject ImagemApplication application
+
+
+<h3>TesteDePagina</h3>
+
+
+<EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="row">
+        <div class="col-md-6">
+            <MudFileUpload Context="upload" T="IBrowserFile" FilesChanged="UploadFile">
+                <ButtonTemplate>
+                    <MudFab HtmlTag="label"
+                            Color="Color.Secondary"
+                            Icon="@Icons.Material.Filled.Image"
+                            Label="Load picture"
+                            for="@upload"
+                            />
+                </ButtonTemplate>
+            </MudFileUpload>
+        </div>
+        @if (Model.BytesDaImagem != null)
+        {
+            <img src="@Model.Imagem64" alt="Selected Image" />
+            <MudList>
+                    <MudListItem Icon="@Icons.Material.Filled.AttachFile" @key="@Model.NomeDoArquivo">
+                        @Model.NomeDoArquivo <code>@Model.BytesDaImagem.Length bytes</code>
+                    </MudListItem>
+            </MudList>
+        }
+        <div class="form-group">
+            <MudButton Variant="Variant.Filled" class="my-2" ButtonType="ButtonType.Submit" Color="Color.Primary">Cadastrar</MudButton>
+        </div>
+    </div>
+
+</EditForm>
+
+@if (Imagens.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+
+}
+
+@code {
+    private IReadOnlyList<ReadImagemDTO> Imagens;
+
+    CreateImagemDTO Model { get; set; } = new CreateImagemDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Imagens = await application.ObterRegistrosDeLeitura<FilterImagemDTO,ReadImagemDTO>();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await application.AdicionarNovoRegistro(Model);        
+    }
+
+    private async Task UploadFile(IBrowserFile file)
+    {
+        using (var stream = file.OpenReadStream())
+        {
+            Model.BytesDaImagem = await ConvertStreamToByteArray(stream);
+            Model.NomeDoArquivo = file.Name;
+            Model.Imagem64 = $"data:image/png;base64,{Convert.ToBase64String(Model.BytesDaImagem)}";
+        }
+        
+        //TODO upload the files to the server
+    }
+
+    private async Task<byte[]> ConvertStreamToByteArray(Stream stream)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            await stream.CopyToAsync(memoryStream);
+            return memoryStream.ToArray();
+        }
+    }
+}

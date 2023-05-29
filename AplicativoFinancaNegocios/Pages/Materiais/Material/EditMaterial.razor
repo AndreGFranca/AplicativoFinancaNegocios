@@ -1,0 +1,92 @@
+﻿@using AplicativoFinancaNegocios.Applications.MaterialViewApplication;
+@using DTO.DTOs.Materiais.MaterialDTOs;
+@using DTO.DTOs.Materiais.UnidadeDeMedidaDTOs;
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">                        
+                        <MudTextField Label="Nome do Material" HelperText="Max. 255 caracteres"
+                                      @bind-Value="Model.Nome" For="@(() => Model.Nome)" />
+                    </div>
+                    <div class="form-group">
+                        <MudNumericField Format="N2" T="decimal" Label="Preço Padrão"
+                                         @bind-Value="Model.PrecoPadrao" For="@(() => Model.PrecoPadrao)" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" AdornmentColor="Color.Warning" />
+                    </div>
+                    <div class="form-group">
+                        <MudNumericField Format="N4" Label="Peso na Embalagem"
+                                         @bind-Value="Model.PesoEmbalagem" For="@(() => Model.PesoEmbalagem)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <MudTextField Label="Descrição do Material"
+                                      @bind-Value="Model.Descricao" For="@(() => Model.Descricao)" HelperText="Max. 1000 caracteres" />
+                    </div>
+                    <div class="form-group">
+                        <MudNumericField Format="N4" Label="Peso/Quantidade"
+                                         @bind-Value="Model.PesoQTDOriginal" For="@(() => Model.PesoQTDOriginal)" />
+                    </div>
+                    <div class="form-group">
+                        <MudSelect Required="true" 
+                            ValueChanged="@((value) => {Model.UnidadeDeMedidaId = value.Value;})" 
+                            T="int?" 
+                            Label="Selecione uma Unidade de medida" 
+                            AnchorOrigin="Origin.BottomCenter" 
+                            Variant="Variant.Outlined" 
+                            AdornmentIcon="@Icons.Material.Filled.Search" 
+                            AdornmentColor="Color.Primary"
+                            Value="Model?.UnidadeDeMedidaId">
+                            @foreach (ReadUnidadeDeMedidaDTO unidadesDeMedidaAtivas in UnidadesDeMedidasAtivas)
+                            {
+                                <MudSelectItem Value="@unidadesDeMedidaAtivas?.Id">@unidadesDeMedidaAtivas.Nome - @unidadesDeMedidaAtivas.Abreviacao</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+                    <ValidationMessage For="@(() => Model.UnidadeDeMedidaId)" />
+                </div>
+            </div>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" OnClick="Submit">Atualizar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public UpdateMaterialDTO Model { get; set; }
+    [Parameter] public IReadOnlyList<ReadUnidadeDeMedidaDTO> UnidadesDeMedidasAtivas { get; set; }
+    [Parameter] public MaterialApplication Application { get; set; }
+    [Parameter] public Func<Task> AtualizarItens { get; set; }
+    [Parameter] public int Id { get; set; }
+
+    private EditContext editContext;
+    void Cancel() => MudDialog.Cancel();
+    async Task Submit() => await SubmitForm();
+    private async Task HandleValidSubmit()
+    {
+        await Application.AtualizarRegistro(Model, Id);
+        await AtualizarItens();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+            editContext = new EditContext(Model);    
+    }
+
+    private async Task SubmitForm()
+    {
+        if (editContext.Validate())
+        {
+            await HandleValidSubmit();
+
+        }
+    }
+}
